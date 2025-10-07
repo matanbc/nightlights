@@ -1,0 +1,11 @@
+/**
+ * Find Percent and Absolute changes in two images with a single band
+ */
+function get_change(img1, img2){
+  var AbsoluteChange = img1.subtract(img2).rename('AbsoluteChange');
+  var RelativeChange = img1.subtract(img2).divide(img1).rename('RelativeChange');
+  var fullChange = RelativeChange.addBands(AbsoluteChange);
+  return fullChange;
+}
+
+exports.get_change = get_change;

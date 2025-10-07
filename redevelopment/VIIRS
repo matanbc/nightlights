@@ -1,0 +1,16 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var viirs = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+
+function loadVIIRSCollection(startDate, endDate, region, coverageMin) {
+  return viirs
+    .filterDate(startDate, endDate)
+    .filterBounds(region)
+    .map(function(image) {
+      var valid = image.select('cf_cvg').gte(coverageMin);
+      return image.updateMask(valid);
+    });
+}
+
+
+exports.loadVIIRSCollection = loadVIIRSCollection;

@@ -1,0 +1,20 @@
+var polygons = require("users/matanbc/nightlights/:polygons").redevelopment_cities;
+var loadVIIRSCollection = require("users/matanbc/nightlights/:redevelopment/VIIRS").loadVIIRSCollection;
+var visualizer = require("users/matanbc/nightlights/:redevelopment/visualization");
+var createViirsTimeSeriesChart = require("users/matanbc/nightlights/:redevelopment/VIIRS").loadVIIRSCollection;
+
+
+var viirsMonthly = loadVIIRSCollection(
+  '2020-12-01',
+  '2025-03-31',
+  polygons,
+  8 //min coverage
+);
+
+var chart = visualizer.createVIIRSTimeSeriesChart(
+  viirsMonthly.select('avg_rad').map(function(image){return image.log();}),
+  polygons
+);
+
+
+visualizer.addChartPanel(chart, '420px');

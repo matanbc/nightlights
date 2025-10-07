@@ -1,0 +1,36 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var vnp46a2 = ee.ImageCollection("NASA/VIIRS/002/VNP46A2");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+/**
+ * Get VIIRS VNP46A2 nighttime lights for a given date and polygon
+ * @param {string} dateString - Date in 'YYYY-MM-DD' format
+ * @param {ee.Geometry} polygon - ee.Geometry object defining the area
+ * @return {ee.Image} - VIIRS image clipped to the polygon
+ */
+function getVNP46A2(startDateString, endDateString, polygon) {
+    // Convert date string to ee.Date
+    var start = ee.Date(startDateString);
+    var end = ee.Date(endDateString);
+    // Load VIIRS Nighttime Lights collection
+    var collection = vnp46a2.filterBounds(polygon)
+                    .filterDate(start, end);
+    //Mask bad quality data
+    var masked_collection = mask_vnp_data(collection);
+    
+    return masked_collection;
+}
+
+
+function mask_vnp_data(collection){
+  var masked_collection = collection.map(function(image) 
+  {
+    var quality = image.select('Mandatory_Quality_Flag');
+    //0 and 1 mean High Quality, see https://developers.google.com/earth-engine/datasets/catalog/NASA_VIIRS_002_VNP46A2#bands
+    var quality_mask = quality.lte(1); 
+    return image.updateMask(quality_mask);
+  });
+  return masked_collection;
+}
+
+exports.getVNP46A2 = getVNP46A2;
+exports.proj = vnp46a2.first().projection();

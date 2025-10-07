@@ -1,0 +1,29 @@
+var cities = require('users/matanbc/nightlights/:polygons').cities;
+var getVNP46A2 = require('users/matanbc/nightlights/:war_impact/VNP46A2').getVNP46A2;
+var visualizer = require("users/matanbc/nightlights/:war_impact/visualization");
+var get_change = require("users/matanbc/nightlights/:war_impact/change_analysis").get_change;
+var create_tTest_mask = require("users/matanbc/nightlights/:war_impact/t_test").create_tTest_mask;
+var proj = require('users/matanbc/nightlights/:war_impact/VNP46A2').proj;
+
+function show_region(location_obj){
+  var ntl_before = getVNP46A2(location_obj.before_start, location_obj.before_end, location_obj.region);
+  var ntl_after = getVNP46A2(location_obj.after_start, location_obj.after_end, location_obj.region);
+  
+  var ntl_mean_before = ntl_before.reduce(ee.Reducer.mean()).reproject(proj).clip(location_obj.region);
+  var ntl_mean_after = ntl_after.reduce(ee.Reducer.mean()).reproject(proj).clip(location_obj.region);
+  var ntl_change_test = get_change(ntl_mean_before.select('DNB_BRDF_Corrected_NTL_mean'),
+                                  ntl_mean_after.select('DNB_BRDF_Corrected_NTL_mean'));
+                                   
+  print(ntl_change_test.select('AbsoluteChange').reduceRegion(ee.Reducer.mean()));
+  var mask = create_tTest_mask(ntl_before, ntl_after, 'DNB_BRDF_Corrected_NTL', 2).select(0);
+  var masked = ntl_change_test.updateMask(mask).clip(location_obj.region);
+  visualizer.visualize(masked, 'RelativeChange', location_obj.title);
+  visualizer.show_borders(location_obj.region);
+}
+
+visualizer.addLegend("Percent Change in NTL")
+Map.setOptions('HYBRID');
+for(var key in cities) {
+  print("Showing " + key);
+  show_region(cities[key]);
+}

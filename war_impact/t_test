@@ -1,0 +1,35 @@
+var proj = require("users/matanbc/nightlights/:war_impact/VNP46A2").proj;
+function summarize_collection(collection){
+  var joined_reducer = ee.Reducer.mean().combine({
+    reducer2: ee.Reducer.stdDev(),
+    sharedInputs: true
+  });
+  return collection.reduce(joined_reducer).reproject(proj);
+}
+
+/** Takes two image collections and a selected band.
+ * Runs a Welch's t-test on these, to see if they share the same mean.
+ * A minimal threshold is then applied on the statistic to produce a mask.
+ * @returns a mask for significant values.
+ */
+function create_tTest_mask(collection1, collection2, band, threshold){
+  var sample_stats1 = summarize_collection(collection1.select(band));
+  var sample_stats2 = summarize_collection(collection2.select(band));
+  
+  var mean1 = sample_stats1.select(band + "_mean");
+  var mean2 = sample_stats2.select(band + "_mean");
+  var std1 = sample_stats1.select(band + "_stdDev");
+  var std2 = sample_stats2.select(band + "_stdDev");
+  
+  var n1 = collection1.select(band).count();
+  var n2 = collection2.select(band).count();
+  
+  // Calculate Welch's t-statistic
+  // t = (mean1 - mean2) / sqrt(std1²/n1 + std2²/n2)
+  var variance_sum = std1.pow(2).divide(n1).add(std2.pow(2).divide(n2));
+  var tStat = mean1.subtract(mean2).divide(variance_sum.sqrt());
+  
+  return tStat.abs().gte(threshold);
+}
+
+exports.create_tTest_mask = create_tTest_mask;

@@ -1,0 +1,27 @@
+function createVIIRSTimeSeriesChart(collection, polygons) {
+  return ui.Chart.image.seriesByRegion({
+    imageCollection: collection,
+    regions: polygons,
+    reducer: ee.Reducer.mean(),
+    seriesProperty: 'name',
+  }).setOptions({
+    title: 'VIIRS Nighttime Lights — Monthly Log(Mean Radiance)',
+    hAxis: {title: 'Month'},
+    vAxis: {title: 'Radiance Log(nW·cm⁻²·sr⁻¹)'},
+    legend: {position: 'right'},
+    lineWidth: 2,
+    pointSize: 0
+  });
+}
+
+function addChartPanel(chart, widthPx) {
+  var panel = ui.Panel({
+    style: {position: 'bottom-left', width: widthPx}
+  });
+  panel.add(chart);
+  ui.root.add(panel);
+}
+
+
+exports.createVIIRSTimeSeriesChart = createVIIRSTimeSeriesChart;
+exports.addChartPanel = addChartPanel;
